@@ -1,5 +1,3 @@
-2024-09-17 - 13:44
-
 # Objective
 Create an OS on a given device (dependent mostly on the size of the device).
 
@@ -72,7 +70,7 @@ ldd --version
 
 1. **Create New VM**: 
    - OS Type: Other Linux 6, 64-bit
-   - Name: Kinet2024
+   - Name: LASTNAME2024
    - Hard drive: Multiple partitions, 25GB
    - Switch to UEFI in advanced options.
 
@@ -87,12 +85,12 @@ ldd --version
      ```
    - Set root password:
      ```bash
-     passwd # Kinet@nt
+     passwd # $PASSWORD
      ```
-   - Create user `antoine`:
+   - Create user `$USER`:
      ```bash
-     useradd -m -G users,wheel antoine
-     passwd antoine # Kinet@ant
+     useradd -m -G users,wheel $USER
+     passwd $USER # $PASSWORD
      ```
    - Start SSH service:
      ```bash
@@ -103,7 +101,7 @@ ldd --version
    - From the host, attempt to ping the VM for connection verification:
      ```bash
      systemctl start service.sshd
-     ssh antoine@VM_IP
+     ssh $USER@VM_IP
      ```
 
 4. **Checksum Verification**:
@@ -118,13 +116,13 @@ ldd --version
 
 ### UEFI Disk Creation
 1. **GPT Disk Creation**:
-   ```bash
-  su - # Kinet@nt	
+```bash
+  su - # $PASSWORD	
   fdisk /dev/sda
   g # Create a GPT partition
-   ```
+```
 
-2.**Partition Setup**:
+2. **Partition Setup**:
 
 - **UEFI Partition**:
 ```bash 
@@ -200,8 +198,8 @@ swapon /dev/sda3 # Enable swap
 
 1. **Stage File Transfer** (From Host):
 ```bash
-scp stage3 antoine@VM_IP:/home/antoine
-mv /home/antoine/stage3 /mnt/gentoo
+scp stage3 $USER@VM_IP:/home/$USER
+mv /home/$USER/stage3 /mnt/gentoo
 tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner
 rm stage3
 ```
