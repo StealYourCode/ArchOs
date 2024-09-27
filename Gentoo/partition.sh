@@ -16,9 +16,9 @@
 
 
 # Ensure we are running as root
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
-  exit
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root"
+  exit 1
 fi
 
 
@@ -29,67 +29,138 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Assign the first argument to USER variable
 USER="$1"
-
-# Check if stage3 tarball exists in /home/$USER directory
-STAGE3_TARBALL=$(find /home/$USER -name "stage3*.tar.xz" -print -quit)
-
-
 DISK="/dev/sda"
 
+STAGE3_TARBALL=$(find /home/$USER -name "stage3*.tar.xz" -print -quit)
+STAGE3_URL="https://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage3-amd64-systemd/stage3-amd64-systemd-20240923T191858Z.tar.xz"
+STAGE3_FILENAME="stage3-amd64-systemd-20240923T191858Z.tar.xz"
 
-# Disk partitioning with sgdisk
+# Clean up function to unmount partitions and disable swap
+cleanup() {
+  echo "Cleaning up mounted partitions due to an error..."
+  umount -R /mnt/gentoo 2>/dev/null || echo "Warning: Failed to unmount /mnt/gentoo"
+  swapoff "${DISK}3" 2>/dev/null || echo "Warning: Failed to deactivate swap."
+}
+
+# Only call cleanup if the script encounters an error
+trap cleanup ERR
+
+
+# Step 1 : Partition the disk
 echo "Partitioning the disk with sgdisk..."
 
-sgdisk --zap-all /dev/sda
-sgdisk --new=1:0:+100M --typecode=1:ef00 /dev/sda 
-sgdisk --new=2:0:+200M --typecode=2:8300 /dev/sda
-sgdisk --new=3:0:+2G --typecode=3:8200 /dev/sda
-sgdisk --new=4:0:+20G --typecode=4:8304 /dev/sda
-sgdisk --new=5:0:0 --typecode=5:8300 /dev/sda
+if lsblk "$DISK" | grep -q "${DISK}[0-9]"; then
+  echo "Warning: $DISK already has partitions."
+  read -p "Do you want to repartition the disk? (y/n): " choice
+  if [ "$choice" == "y" ]; then
+    sgdisk --zap-all "$DISK"
+    sgdisk --new=1:0:+100M --typecode=1:ef00 "$DISK"
+    sgdisk --new=2:0:+200M --typecode=2:8300 "$DISK"
+    sgdisk --new=3:0:+2G --typecode=3:8200 "$DISK"
+    sgdisk --new=4:0:+20G --typecode=4:8304 "$DISK"
+    sgdisk --new=5:0:0 --typecode=5:8300 "$DISK"
+  else
+    echo "Skipping partitioning."
+  fi
+else
+  sgdisk --zap-all "$DISK"
+  sgdisk --new=1:0:+100M --typecode=1:ef00 "$DISK"
+  sgdisk --new=2:0:+200M --typecode=2:8300 "$DISK"
+  sgdisk --new=3:0:+2G --typecode=3:8200 "$DISK"
+  sgdisk --new=4:0:+20G --typecode=4:8304 "$DISK"
+  sgdisk --new=5:0:0 --typecode=5:8300 "$DISK"
+fi
 
-sgdisk --print /dev/sda
 
-# Create filesystems
+# Step 2 : Create filesystems
 echo "Creating filesystems..."
 
-mkfs.vfat -F32 ${DISK}1 # UEFI partition
-mkfs.vfat -F32 ${DISK}2 # Boot partition
-mkswap ${DISK}3          # Swap partition
-mkfs.ext4 ${DISK}4       # Gentoo root partition
-mkfs.ext4 ${DISK}5       # MyLinux partition
+# UEFI partition
+if blkid "${DISK}1" | grep -q "vfat"; then
+  echo "Warning: ${DISK}1 already has a vfat filesystem."
+  read -p "Do you want to reformat the UEFI partition? (y/n): " choice
+  if [ "$choice" == "y" ]; then
+    mkfs.vfat -F32 "${DISK}1"
+  fi
+else
+  mkfs.vfat -F32 "${DISK}1"
+fi
+
+# Boot partition
+if blkid "${DISK}2" | grep -q "vfat"; then
+  echo "Warning: ${DISK}2 already has a vfat filesystem."
+  read -p "Do you want to reformat the Boot partition? (y/n): " choice
+  if [ "$choice" == "y" ]; then
+    mkfs.vfat -F32 "${DISK}2"
+  fi
+else
+  mkfs.vfat -F32 "${DISK}2"
+fi
+
+# Swap partition
+mkswap "${DISK}3"
+
+# Gentoo root partition
+if blkid "${DISK}4" | grep -q "ext4"; then
+  echo "Warning: ${DISK}4 already has an ext4 filesystem."
+  read -p "Do you want to reformat the Root partition? (y/n): " choice
+  if [ "$choice" == "y" ]; then
+    mkfs.ext4 "${DISK}4"
+  fi
+else
+  mkfs.ext4 "${DISK}4"
+fi
+
+# MyLinux partition
+if blkid "${DISK}5" | grep -q "ext4"; then
+  echo "Warning: ${DISK}5 already has an ext4 filesystem."
+  read -p "Do you want to reformat the MyLinux partition? (y/n): " choice
+  if [ "$choice" == "y" ]; then
+    mkfs.ext4 "${DISK}5"
+  fi
+else
+  mkfs.ext4 "${DISK}5"
+fi
 
 echo "Filesystems created."
 
-# Mount partitions
+
+# Step 3 : Mount partitions
 echo "Mounting partitions..."
 
-mount ${DISK}4 /mnt/gentoo # Mount Gentoo root partition
-mkdir /mnt/gentoo/boot
-mount ${DISK}2 /mnt/gentoo/boot # Mount Boot partition
-mkdir /mnt/gentoo/efi
-mount ${DISK}1 /mnt/gentoo/efi  # Mount UEFI partition
-swapon ${DISK}3 # Enable swap
+mount "${DISK}4" /mnt/gentoo
+mkdir -p /mnt/gentoo/boot
+mount "${DISK}2" /mnt/gentoo/boot
+mkdir -p /mnt/gentoo/efi
+mount "${DISK}1" /mnt/gentoo/efi
+
+swapon "${DISK}3"
 
 echo "Partitions mounted and swap enabled."
 
-# Prepare for Gentoo base installation
+
+# Step 4: Download or move stage3 tarball
 echo "Preparing for Gentoo installation..."
 
 if [ -z "$STAGE3_TARBALL" ]; then
-  echo "Error: stage3 tarball not found in /home/$USER."
-  exit 1
+  echo "Stage3 tarball not found in /home/$USER. Downloading..."
+  curl -o "/mnt/gentoo/$STAGE3_FILENAME" "$STAGE3_URL"
+  if [ $? -ne 0 ]; then
+    echo "Error downloading stage3 tarball from $STAGE3_URL."
+    exit 1
+  else
+    echo "Stage3 tarball downloaded successfully."
+  fi
 else
   echo "Found stage3 tarball: $STAGE3_TARBALL"
-  # Move the tarball to /mnt/gentoo
   mv "$STAGE3_TARBALL" /mnt/gentoo/
 fi
 
-# Extract stage3 tarball (ensure the correct path for the stage3 tarball)
+# Extract stage3 tarball
 cd /mnt/gentoo
 tar xpvf /mnt/gentoo/stage3*.tar.xz --xattrs-include='*.*' --numeric-owner
-rm /mnt/gentoo/stage3*.tar.xz # Remove stage3 tarball after extraction
+rm /mnt/gentoo/stage3*.tar.xz
 
 # Prepare system for chroot
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
