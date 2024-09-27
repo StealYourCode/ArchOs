@@ -70,13 +70,15 @@ sudo dmesg | grep "Kernel module initialized" # Shows the initialization message
 
 To show thread count for a given process:
 ``` bash
-firefox & ps -o nlwp PROCESS_ID
+firefox &
+ps -o nlwp PROCESS_ID
 ```
 
 To explore the internal workings of an OS:
 
 ``` bash
-cd /proc cat cmdline
+cd /proc
+cat cmdline
 ```
 
 ## Scheduling Algorithms
@@ -123,8 +125,7 @@ export PS1="(chroot) ${PS1}"
 
 To check DNS configuration:
 ```bash
-cd /etc 
-cat resolv.conf
+cat /etc/resolv.conf
 ```
 
 ### Choosing the Right Profile
@@ -135,7 +136,6 @@ emerge-webrsync
 eselect profile list 
 eselect profile set XX # Use the preferred profile number (e.g., 22 for systemd)
 ```
-
 
 ### Time Zone Configuration
 
