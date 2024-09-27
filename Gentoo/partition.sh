@@ -6,6 +6,7 @@
 
 ### To transfer this script you should use scp partition.sh $USER@VM_IP:/home/$USER
 ### Where $USER is the new user you create previously
+### Don't forget to chmod +x partition.sh
 
 ### This script will do the rest of the Lesson 1 for you,
 ### When it has finish running you should be able to switch to "chroot user" with theses commands
@@ -38,43 +39,17 @@ STAGE3_TARBALL=$(find /home/$USER -name "stage3*.tar.xz" -print -quit)
 DISK="/dev/sda"
 
 
-# Disk partitioning with sfdisk
-echo "Partitioning the disk with sfdisk..."
+# Disk partitioning with sgdisk
+echo "Partitioning the disk with sgdisk..."
 
-fdisk /dev/sda <<EOF
-g
-n
+sgdisk --zap-all /dev/sda
+sgdisk --new=1:0:+100M --typecode=1:ef00 /dev/sda 
+sgdisk --new=2:0:+200M --typecode=2:8300 /dev/sda
+sgdisk --new=3:0:+2G --typecode=3:8200 /dev/sda
+sgdisk --new=4:0:+20G --typecode=4:8304 /dev/sda
+sgdisk --new=5:0:0 --typecode=5:8300 /dev/sda
 
-
-+100M
-t
-1
-n
-
-
-+200M
-n
-
-
-+2G
-t
-3
-19
-n
-
-
-+20G
-t
-4
-23
-n
-
-
-
-p
-w
-EOF
-
+sgdisk --print /dev/sda
 
 # Create filesystems
 echo "Creating filesystems..."
@@ -114,7 +89,7 @@ fi
 # Extract stage3 tarball (ensure the correct path for the stage3 tarball)
 cd /mnt/gentoo
 tar xpvf /mnt/gentoo/stage3*.tar.xz --xattrs-include='*.*' --numeric-owner
-/mnt/gentoo/stage3*.tar.xz # Remove stage3 tarball after extraction
+rm /mnt/gentoo/stage3*.tar.xz # Remove stage3 tarball after extraction
 
 # Prepare system for chroot
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
