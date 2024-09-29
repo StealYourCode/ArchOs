@@ -1,15 +1,19 @@
 #!/bin/bash
 
-### Before using this script you need to have finish multiples things: 
-### 1. Everything before "Disk Partitioning with fdisk"
-### 2. Move stage3xxx.tar.xz to your /home/$USER directory 
+# Prerequisites:
+# 1. A user other than root: # useradd -m -G users,wheel <username>
+# 2. A password set both for root and your user: # passwd
+# 3. A running SSH service for QoL: # /etc/init.d/sshd start
 
-### To transfer this script you should use scp partition.sh $USER@VM_IP:/home/$USER
-### Where $USER is the new user you create previously
-### Don't forget to chmod +x partition.sh
+# Usage:
+# 1. Transfer this script to your virtual machine: 
+## scp partition.sh $USER@VM_IP:/home/$USER (from host machine)
+## OR
+## curl -o /home/$USER https://raw.githubusercontent.com/StealYourCode/ArchOs/refs/heads/main/Gentoo/partition.sh
+# 2. Give execute permissions : chmod +x partition.sh
 
-### This script will do the rest of the Lesson 1 for you,
-### When it has finish running you should be able to switch to "chroot user" with theses commands
+# This script will then do the rest of Lesson 1 for you,
+# When it has finished running you will be able to chroot to your gentoo installation:
 ## chroot /mnt/gentoo /bin/bash
 ## source /etc/profile
 ## export PS1="(chroot) ${PS1}"
@@ -25,7 +29,7 @@ fi
 # Check if the username is provided as an argument
 if [ -z "$1" ]; then
   echo "Error: No username provided."
-  echo "Usage: sudo ./install.sh <username>"
+  echo "Usage (as root): ./partition.sh <username>"
   exit 1
 fi
 
