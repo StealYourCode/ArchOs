@@ -222,6 +222,6 @@ Use the Gentoo Handbook for guidance on enabling necessary options in `menuconfi
 ```bash
 make -j2 # Use 2 cores for compilation 
 make && make modules_install # Compile and install the modules 
-date ; make -j2 && make modules install; date # Show time before and after compilation
+date ; make -j2 && make modules_install; date # Show time before and after compilation
 ```
 
