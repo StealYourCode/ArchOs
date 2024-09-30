@@ -32,16 +32,16 @@ env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
 
 # INSTALL REQUIRED PACKAGES
 echo "Installing necessary system utilities..."
-emerge --ask sys-apps/pciutils sys-apps/usbutils  # Install PCI and USB utilities
+emerge sys-apps/pciutils sys-apps/usbutils  # Install PCI and USB utilities
 
 # INSTALL KERNEL MODULES
 echo "Installing Gentoo kernel sources..."
-emerge --ask sys-kernel/gentoo-sources 
+emerge sys-kernel/gentoo-sources 
 
 # CONFIGURE AND COMPILE KERNEL
 echo "Configuring and compiling the kernel..."
 cd /usr/src/linux*
-make menuconfig  # Opens menu for manual kernel configuration
+#make menuconfig  # Opens menu for manual kernel configuration
 curl https://github.com/StealYourCode/ArchOs/blob/main/gentoo/Files/config
 
 # Compile kernel and install modules
@@ -49,7 +49,7 @@ echo "Starting kernel compilation..."
 date > StartingDate.log
 make -j2 && make modules_install
 date > EndingDate.log
-echo "Kernel compilation and module installation completed."
+echo "Kernel compilation and module installation completed, find the starting and ending time in the 2 log files."
 
 
 echo "Exiting chroot environment."
