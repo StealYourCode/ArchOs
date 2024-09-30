@@ -42,15 +42,13 @@ emerge --ask sys-kernel/gentoo-sources
 echo "Configuring and compiling the kernel..."
 cd /usr/src/linux*
 make menuconfig  # Opens menu for manual kernel configuration
-curl https://github.com/StealYourCode/ArchOs/blob/main/gentoo/XXX
-### CURL THE CONFIG FILE FROM GITHUB ?
-
+curl https://github.com/StealYourCode/ArchOs/blob/main/gentoo/Files/config
 
 # Compile kernel and install modules
 echo "Starting kernel compilation..."
-date
+date > StartingDate.log
 make -j2 && make modules_install
-date
+date > EndingDate.log
 echo "Kernel compilation and module installation completed."
 
 
