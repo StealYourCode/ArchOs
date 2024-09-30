@@ -37,8 +37,6 @@ USER="$1"
 DISK="/dev/sda"
 
 STAGE3_TARBALL=$(find /home/$USER -name "stage3*.tar.xz" -print -quit)
-STAGE3_URL="https://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage3-amd64-systemd/stage3-amd64-systemd-20240923T191858Z.tar.xz"
-STAGE3_FILENAME="stage3-amd64-systemd-20240923T191858Z.tar.xz"
 
 # Clean up function to unmount partitions and disable swap
 cleanup() {
@@ -149,6 +147,9 @@ echo "Preparing for Gentoo installation..."
 
 if [ -z "$STAGE3_TARBALL" ]; then
   echo "Stage3 tarball not found in /home/$USER. Downloading..."
+  # Determine latest stage 3
+  STAGE3_FILENAME=$(curl -s "https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-systemd/latest-stage3-amd64-systemd.txt" | grep stage3-amd64-systemd-* | cut -d " " -f 1)
+  STAGE3_URL="https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-systemd/$STAGE3_FILENAME"
   curl -o "/mnt/gentoo/$STAGE3_FILENAME" "$STAGE3_URL"
   if [ $? -ne 0 ]; then
     echo "Error downloading stage3 tarball from $STAGE3_URL."
