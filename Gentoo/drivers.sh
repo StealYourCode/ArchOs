@@ -47,7 +47,7 @@ curl https://github.com/StealYourCode/ArchOs/blob/main/gentoo/Files/config
 # Compile kernel and install modules
 echo "Starting kernel compilation..."
 date > StartingDate.log
-make -j2 && make modules_install
+make -j2 && make -j2 modules_install
 date > EndingDate.log
 echo "Kernel compilation and module installation completed, find the starting and ending time in the 2 log files."
 
