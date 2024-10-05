@@ -187,8 +187,8 @@ ls # Allow to check if the boot was configured properly
 cd  /etc
 nano fstab
 ```txt
-/dev/sda4     /    ext4       defaults,noatime 0,1
-/dev/sda3     none swap       sw               0,0
+/dev/sda4     /    ext4       defaults,noatime 0 1
+/dev/sda3     none swap       sw               0 0
 
 ```
 
